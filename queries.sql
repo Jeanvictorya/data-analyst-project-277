@@ -88,3 +88,33 @@ JOIN products p ON s.product_id = p.product_id           -- une con productos pa
 GROUP BY TO_CHAR(s.sale_date, 'YYYY-MM')                 -- agrupa por mes
 ORDER BY year_month ASC;                                 -- ordena cronológicamente
 
+
+
+
+-- Encontrar clientes cuya primera compra fue con precio 0
+WITH first_purchase AS (
+    SELECT 
+        s.customer_id,                          -- identificador del cliente
+        MIN(s.sale_date) AS first_date          -- fecha de la primera compra
+    FROM sales s
+    GROUP BY s.customer_id                      -- agrupa por cliente
+)
+SELECT 
+    c.customer_id,                              -- ID del cliente
+    c.first_name,                               -- nombre
+    c.last_name,                                -- apellido
+    fp.first_date AS first_purchase_date,       -- fecha de la primera compra
+    p.product_id,                               -- producto comprado
+    p.product_name,                             -- nombre del producto
+    p.price                                     -- precio del producto (será 0 en este caso)
+FROM first_purchase fp
+JOIN sales s 
+    ON fp.customer_id = s.customer_id 
+   AND fp.first_date = s.sale_date              -- une con la venta que corresponde a la primera compra
+JOIN products p 
+    ON s.product_id = p.product_id              -- une con productos para obtener el precio
+JOIN customers c 
+    ON s.customer_id = c.customer_id            -- une con clientes para obtener nombre/apellido
+WHERE p.price = 0                               -- condición: la primera compra fue en promoción
+ORDER BY fp.first_date, c.customer_id;
+
